@@ -1,14 +1,15 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-
 import streamlit as st
 from agno.agent import Agent
 from agno.knowledge.knowledge import Knowledge
 from agno.knowledge.reader.pdf_reader import PDFReader
 from agno.vectordb.qdrant import Qdrant
 from agno.models.ollama import Ollama
+from agno.models.openai import OpenAI
 from agno.knowledge.embedder.ollama import OllamaEmbedder
+from agno.knowledge.embedder.openai import OpenAIEmbedder
 
 from agno.team import Team
 
@@ -27,12 +28,23 @@ def init_session_state():
     if 'knowledge' not in st.session_state:
         st.session_state.knowledge = None
 
-#create raw embedder
-raw_embedder = OllamaEmbedder(
+# Create embedders
+# Option 1: Ollama embedder (local)
+ollama_embedder = OllamaEmbedder(
     id="nomic-embed-text",
     host="http://localhost:11434",
     dimensions=None
 )
+
+# Option 2: OpenAI embedder (cloud)
+openai_embedder = OpenAIEmbedder(
+    model="text-embedding-3-small",
+    dimensions=1536  # Correct dimensions for text-embedding-3-small
+)
+
+# Select which embedder to use (default to OpenAI if API key is available)
+use_openai = os.environ.get("OPENAI_API_KEY", "") != ""
+raw_embedder = openai_embedder if use_openai else ollama_embedder
 
 def init_qdrant():
     """Initialize local Qdrant vector database"""
@@ -105,11 +117,17 @@ def main():
                 knowledge = process_document(uploaded_file, st.session_state.vector_db)
                 st.session_state.knowledge = knowledge
                 
-                # Initialize agents with Llama model
+                # Choose model based on API key availability
+                if use_openai:
+                    model_provider = OpenAI(model="gpt-4o")
+                else:
+                    model_provider = Ollama(id="llama3.1")
+                    
+                # Initialize agents
                 legal_researcher = Agent(
                     name="Legal Researcher",
                     role="Legal research specialist",
-                    model=Ollama(id="llama3.1"),  
+                    model=model_provider,  
                     knowledge=st.session_state.knowledge,
                     search_knowledge=True,
                     instructions=[
@@ -123,7 +141,7 @@ def main():
                 contract_analyst = Agent(
                     name="Contract Analyst",
                     role="Contract analysis specialist",
-                    model=Ollama(id="llama3.1"),
+                    model=model_provider,
                     knowledge=knowledge,
                     search_knowledge=True,
                     instructions=[
@@ -137,7 +155,7 @@ def main():
                 legal_strategist = Agent(
                     name="Legal Strategist", 
                     role="Legal strategy specialist",
-                    model=Ollama(id="llama3.1"),
+                    model=model_provider,
                     knowledge=knowledge,
                     search_knowledge=True,
                     instructions=[
@@ -152,7 +170,7 @@ def main():
                 legal_team_lead = Agent(
                     name="Legal Team Lead",
                     role="Legal team coordinator",
-                    model=Ollama(id="llama3.1"),
+                    model=model_provider,
                     knowledge=st.session_state.knowledge,
                     search_knowledge=True,
                     instructions=[
@@ -166,7 +184,7 @@ def main():
                 # Form the team
                 st.session_state.legal_team = Team(
                     members=[legal_team_lead, legal_researcher, contract_analyst, legal_strategist],
-                    model=Ollama(id="llama3.1")
+                    model=model_provider
                 )
                 
                 st.success("✅ Document processed and team initialized!")
