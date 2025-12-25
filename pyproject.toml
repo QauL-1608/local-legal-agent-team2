@@ -10,9 +10,11 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "agno",
-    "streamlit==1.40.2",
-    "qdrant-client==1.12.1",
-    "ollama==0.4.4",
+    "streamlit==1.52.2",
+    "qdrant-client==1.16.2",
+    "ollama==0.6.1",
+    "pypdf",
+    "python-dotenv",
 ]
 
 [project.optional-dependencies]
@@ -23,13 +25,6 @@ dev = [
     "mypy",
 ]
 
-[tool.uv]
-dev-dependencies = [
-    "pytest",
-    "black",
-    "ruff",
-    "mypy",
-]
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
