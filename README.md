@@ -2,6 +2,16 @@
 
 A local AI-powered legal document analysis system that uses both local and cloud-based AI models to analyze legal documents, contracts, and provide comprehensive legal insights.
 
+**Quick Start:**
+```bash
+# Install dependencies
+uv sync
+
+# Run the application
+source $HOME/.local/bin/env
+uv run streamlit run local_legal_agent.py
+```
+
 ## Features
 
 - **Document Analysis**: Upload and analyze legal documents (PDF format)
@@ -38,16 +48,18 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
 3. Set up environment variables:
-   - Create a `.env` file in the project root (or use the existing `.env.py` file)
-   - Add your OpenAI API key:
+   - Copy the sample environment file to create your own:
+     ```bash
+     cp .env.sample .env
+     ```
+   - Edit the `.env` file and add your OpenAI API key:
      ```
      OPENAI_API_KEY="your-api-key-here"
      ```
 
-4. Start Qdrant server:
-   ```bash
-   docker run -p 6333:6333 qdrant/qdrant
-   ```
+4. Install and start Qdrant server:
+   - Follow the instructions at https://qdrant.tech/documentation/install/
+   - Ensure it's running on port 6333
 
 5. (Optional) Start Ollama server:
    ```bash
@@ -60,20 +72,26 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
    ollama pull nomic-embed-text
    ```
 
-## Usage
+## Running the Application
 
-1. Start the application:
+1. Make sure your environment is set up correctly:
+   - `.env` file with your OpenAI API key
+   - Qdrant server running on port 6333
+   - Ollama server running (if using local models)
+
+2. Start the application:
    ```bash
+   source $HOME/.local/bin/env  # Add uv to your PATH
    uv run streamlit run local_legal_agent.py
    ```
 
-2. Open your browser at http://localhost:8501
+3. Open your browser at the URL shown in the terminal (typically http://localhost:8501)
 
-3. Upload a legal document (PDF format)
-
-4. Select an analysis type and enter any specific queries
-
-5. Review the detailed analysis, key points, and recommendations
+4. Using the application:
+   - Upload a legal document (PDF format)
+   - Select an analysis type (Contract Review, Legal Research, etc.)
+   - Enter any specific queries or questions
+   - Review the detailed analysis, key points, and recommendations
 
 ## Model Selection
 
@@ -91,18 +109,23 @@ The application automatically selects which models to use:
 
 ### Common Issues
 
-1. **Dimension mismatch errors**: This occurs when switching between different embedding models. Delete the Qdrant collection and restart:
+1. **Dimension mismatch errors**: This occurs when switching between different embedding models. Delete the Qdrant collection using the Qdrant API:
    ```bash
    curl -X DELETE http://localhost:6333/collections/legal_docs_local
    ```
+   Then restart the application.
 
-2. **OpenAI API key issues**: Ensure your API key is correctly set in the `.env.py` file and that it has not expired.
+2. **OpenAI API key issues**: Ensure your API key is correctly set in the `.env` file and that it has not expired.
 
 3. **Ollama model not found**: Make sure you've pulled the required models:
    ```bash
    ollama pull llama3.1
    ollama pull nomic-embed-text
    ```
+
+4. **Import errors**: If you encounter import errors, run `uv sync` to ensure all dependencies are installed correctly.
+
+5. **Connection refused errors**: Make sure Qdrant is running and accessible on port 6333.
 
 ## License
 
